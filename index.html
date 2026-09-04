@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#150F0F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Secret Word — Insider Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #150F0F;
+    --bg-elev: #211616;
+    --bg-elev-2: #2b1c1c;
+    --red: #D7263D;
+    --red-dark: #A81C2E;
+    --gold: #E8B84B;
+    --gold-dim: #8a6c2c;
+    --cream: #F2E9DC;
+    --muted: #a89a90;
+    --border: #3a2828;
+    --radius: 12px;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background: radial-gradient(ellipse at top, #241717 0%, var(--bg) 55%, #0e0a0a 100%);
+    color: var(--cream);
+    font-family: var(--font-body);
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+  button{ font-family: inherit; }
+  h1,h2,h3{ font-family: var(--font-display); letter-spacing: 0.03em; margin:0; }
+
+  #app{
+    display:flex;
+    flex-direction:column;
+    height: 100dvh;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 14px 18px;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    flex-shrink:0;
+    z-index: 5;
+  }
+  .brand{ display:flex; align-items:center; gap:8px; }
+  .brand-text{
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 0.12em;
+    color: var(--cream);
+  }
+  .brand svg{ width:26px; height:26px; }
+  .icon-btn{
+    background:none;
+    border:none;
+    color: var(--cream);
+    padding: 8px;
+    border-radius: 8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    touch-action: manipulation;
+  }
+  .icon-btn:active{ background: rgba(255,255,255,0.08); }
+  .icon-btn.hidden{ visibility:hidden; }
+
+  /* ---------- Screens ---------- */
+  #screens{
+    flex:1;
+    overflow-y:auto;
+    position: relative;
+  }
+  .screen{
+    display:none;
+    flex-direction:column;
+    padding: 24px 20px 32px;
+    min-height:100%;
+  }
+  .screen.active{ display:flex; animation: fadeIn .25s ease; }
+  @keyframes fadeIn{ from{ opacity:0; transform: translateY(6px);} to{opacity:1; transform:none;} }
+
+  /* ---------- Home screen ---------- */
+  #screen-home{ align-items:center; text-align:center; justify-content:center; gap:22px; }
+  .home-eye{ width:76px; height:76px; opacity:0.9; }
+  .home-title{ font-size: 52px; color: var(--cream); line-height:1; }
+  .home-sub{ color: var(--muted); font-size:15px; max-width: 320px; line-height:1.5; }
+
+  .rules{
+    text-align:left;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    width:100%;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .rules summary{
+    cursor:pointer;
+    color: var(--cream);
+    font-weight:600;
+    font-size:15px;
+  }
+  .rules ol{ margin: 10px 0 2px; padding-left: 18px; line-height:1.6; }
+  .rules li::marker{ color: var(--gold); }
+
+  .btn{
+    border:none;
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    font-size: 17px;
+    font-weight:700;
+    cursor:pointer;
+    width:100%;
+    touch-action: manipulation;
+    transition: transform .08s ease, opacity .15s ease, background .15s ease;
+  }
+  .btn:active{ transform: scale(0.98); }
+  .btn-primary{ background: var(--red); color: #fff; box-shadow: 0 6px 18px rgba(215,38,61,0.35); }
+  .btn-primary:active{ background: var(--red-dark); }
+  .btn-ghost{
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--cream);
+  }
+  .btn-ghost:active{ background: rgba(255,255,255,0.06); }
+  .btn:disabled{ opacity:0.4; cursor:not-allowed; transform:none; }
+
+  /* ---------- Role screens (master / insider) ---------- */
+  .role-screen{ gap:18px; }
+  .stamp{
+    align-self:flex-start;
+    border: 2px solid var(--red);
+    color: var(--red);
+    font-family: var(--font-display);
+    letter-spacing: 0.12em;
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    transform: rotate(-4deg);
+  }
+  .role-title{ font-size: 30px; }
+  .role-instruction{
+    color: var(--cream);
+    font-size: 17px;
+    font-weight:600;
+    line-height:1.4;
+  }
+  .role-instruction .muted-line{
+    display:block;
+    color: var(--muted);
+    font-weight:400;
+    font-size:14px;
+    margin-top:4px;
+  }
+
+  /* ---------- Word list ---------- */
+  .wordlist{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin: 4px 0;
+  }
+  .word-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .word-index{
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--muted);
+    background: var(--bg-elev-2);
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .word-text{ font-size:17px; font-weight:600; letter-spacing:0.01em; }
+  .word-check{
+    margin-left:auto;
+    color: var(--gold);
+    font-weight:800;
+    font-size: 18px;
+    opacity:0;
+    transition: opacity .15s ease;
+  }
+  .word-row.highlight{
+    background: rgba(232,184,75,0.14);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px rgba(232,184,75,0.25), 0 6px 16px rgba(232,184,75,0.15);
+  }
+  .word-row.highlight .word-index{ background: var(--gold); color: #2b1c05; }
+  .word-row.highlight .word-check{ opacity:1; }
+
+  /* ---------- Reveal button ---------- */
+  .reveal-btn{
+    background: var(--bg-elev-2);
+    border: 2px solid var(--gold-dim);
+    color: var(--gold);
+    border-radius: var(--radius);
+    padding: 18px;
+    font-size: 16px;
+    font-weight:700;
+    letter-spacing: 0.04em;
+    width:100%;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+    touch-action: none;
+    cursor:pointer;
+    transition: background .12s ease, transform .08s ease;
+  }
+  .reveal-btn.pressed{
+    background: rgba(232,184,75,0.18);
+    transform: scale(0.98);
+  }
+
+  .role-actions{ margin-top:auto; display:flex; flex-direction:column; gap:10px; padding-top: 18px; }
+  .hint-text{ font-size:12.5px; color: var(--muted); text-align:center; margin-top:-4px; }
+
+  /* ---------- Play screen ---------- */
+  #screen-play{ gap:14px; padding-bottom: 130px; }
+  .play-note{ color: var(--muted); font-size:14px; text-align:center; }
+
+  /* ---------- Timer bar ---------- */
+  .timerbar{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    background: var(--bg-elev);
+    border-top: 1px solid var(--border);
+    padding: 12px 18px calc(14px + var(--safe-bottom));
+    z-index: 6;
+    flex-shrink:0;
+  }
+  .timerbar.hidden{ display:none; }
+  .timer-progress{
+    height:6px;
+    border-radius:4px;
+    background: var(--bg-elev-2);
+    overflow:hidden;
+    margin-bottom: 12px;
+  }
+  .timer-progress-fill{
+    height:100%;
+    background: linear-gradient(90deg, var(--gold), var(--red));
+    width:100%;
+    transition: width 1s linear;
+  }
+  .timer-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .timer-readout{
+    font-family: var(--font-display);
+    font-size: 40px;
+    letter-spacing: 0.04em;
+    min-width: 100px;
+  }
+  .timerbar.time-up .timer-readout{ color: var(--red); animation: pulse 1s ease infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.45;} }
+
+  .timer-controls{ display:flex; gap:10px; }
+  .round-btn{
+    width:52px; height:52px;
+    border-radius:50%;
+    border: none;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px;
+    cursor:pointer;
+    touch-action: manipulation;
+  }
+  .round-btn.play-pause{ background: var(--red); color:#fff; width:60px; height:60px; font-size:20px; }
+  .round-btn.reset{ background: var(--bg-elev-2); color: var(--cream); border: 1px solid var(--border); }
+  .round-btn:active{ transform: scale(0.94); }
+
+  /* ---------- Drawer ---------- */
+  .drawer-overlay{
+    position:fixed; inset:0;
+    background: rgba(0,0,0,0.55);
+    opacity:0; pointer-events:none;
+    transition: opacity .2s ease;
+    z-index: 10;
+  }
+  .drawer-overlay.open{ opacity:1; pointer-events:auto; }
+
+  .drawer{
+    position:fixed;
+    top:0; right:0; bottom:0;
+    width: min(300px, 82vw);
+    background: var(--bg-elev-2);
+    border-left: 3px solid var(--red);
+    z-index: 11;
+    padding: 22px 20px calc(22px + var(--safe-bottom));
+    transform: translateX(100%);
+    transition: transform .25s ease;
+    display:flex;
+    flex-direction:column;
+    gap: 16px;
+    overflow-y:auto;
+  }
+  .drawer.open{ transform: translateX(0); }
+  .drawer h3{ font-size:22px; letter-spacing:0.08em; margin-bottom:2px; }
+  .drawer-item{
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--cream);
+    text-align:left;
+    padding: 13px 14px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight:600;
+    cursor:pointer;
+    touch-action: manipulation;
+  }
+  .drawer-item:active{ background: rgba(255,255,255,0.06); }
+  .drawer-item:disabled{ opacity:0.35; cursor:not-allowed; }
+  .drawer-section{
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .drawer-section p{ margin:0; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+  .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--cream);
+    padding: 9px 13px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .chip.active{ background: var(--gold); color:#2b1c05; border-color: var(--gold); }
+  .custom-timer{ display:flex; gap:8px; align-items:center; }
+  .custom-timer input{
+    flex:1;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--cream);
+    border-radius: 8px;
+    padding: 10px;
+    font-size:15px;
+    width: 100%;
+    -moz-appearance: textfield;
+  }
+  .custom-timer button{
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--gold);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .drawer-close{ margin-top:auto; }
+
+  ::-webkit-scrollbar{ width:0; height:0; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 16C6 8 12 5 16 5C20 5 26 8 30 16C26 24 20 27 16 27C12 27 6 24 2 16Z" stroke="#E8B84B" stroke-width="1.6"/>
+        <circle cx="16" cy="16" r="5.5" fill="#D7263D"/>
+        <circle cx="16" cy="16" r="2" fill="#150F0F"/>
+      </svg>
+      <span class="brand-text">SECRET WORD</span>
+    </div>
+    <button id="menuBtn" class="icon-btn hidden" aria-label="Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M3 6H21M3 12H21M3 18H21" stroke="#F2E9DC" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </header>
+
+  <main id="screens">
+
+    <!-- HOME -->
+    <section id="screen-home" class="screen active">
+      <svg class="home-eye" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 16C6 8 12 5 16 5C20 5 26 8 30 16C26 24 20 27 16 27C12 27 6 24 2 16Z" stroke="#E8B84B" stroke-width="1.4"/>
+        <circle cx="16" cy="16" r="5.5" fill="#D7263D"/>
+        <circle cx="16" cy="16" r="2" fill="#150F0F"/>
+      </svg>
+      <h1 class="home-title">SECRET<br>WORD</h1>
+      <p class="home-sub">A companion for your Insider-style party round. Someone always knows more than they let on.</p>
+
+      <button class="btn btn-primary" id="btnHomeStart">Start new round</button>
+
+      <details class="rules">
+        <summary>How a round works</summary>
+        <ol>
+          <li>Pick a Master and secretly pick one player to be the Insider. Everyone else is a Detective.</li>
+          <li>Pass the phone: the Master and the Insider each privately learn which of the five words is correct.</li>
+          <li>Detectives ask yes/no questions to find the secret word before time runs out.</li>
+          <li>The Insider already knows it, but has to blend in without getting caught steering the group.</li>
+        </ol>
+      </details>
+    </section>
+
+    <!-- MASTER REVEAL -->
+    <section id="screen-master" class="screen role-screen">
+      <span class="stamp">Classified</span>
+      <h2 class="role-title">Master's eyes only</h2>
+      <p class="role-instruction">Everyone else, close your eyes.
+        <span class="muted-line">Master — hold the button below to see the secret word.</span>
+      </p>
+
+      <div class="wordlist" id="wordlist-master"></div>
+
+      <button class="reveal-btn" id="revealBtnMaster">Hold to reveal</button>
+
+      <div class="role-actions">
+        <p class="hint-text" id="masterHint">Reveal the word at least once to continue</p>
+        <button class="btn btn-primary" id="btnMasterContinue" disabled>Insider's turn →</button>
+      </div>
+    </section>
+
+    <!-- INSIDER REVEAL -->
+    <section id="screen-insider" class="screen role-screen">
+      <span class="stamp">Classified</span>
+      <h2 class="role-title">Insider's eyes only</h2>
+      <p class="role-instruction">Master, close your eyes too.
+        <span class="muted-line">Insider — hold the button below to see the secret word.</span>
+      </p>
+
+      <div class="wordlist" id="wordlist-insider"></div>
+
+      <button class="reveal-btn" id="revealBtnInsider">Hold to reveal</button>
+
+      <div class="role-actions">
+        <p class="hint-text" id="insiderHint">Reveal the word at least once to continue</p>
+        <button class="btn btn-primary" id="btnInsiderContinue" disabled>Start the round →</button>
+      </div>
+    </section>
+
+    <!-- PLAY -->
+    <section id="screen-play" class="screen">
+      <h2 class="role-title">The five words</h2>
+      <p class="play-note">Everyone can see this list. Only the Master and Insider know which one is correct. Ask away.</p>
+      <div class="wordlist" id="wordlist-play"></div>
+    </section>
+
+  </main>
+
+  <!-- TIMER BAR -->
+  <footer class="timerbar hidden" id="timerBar">
+    <div class="timer-progress"><div class="timer-progress-fill" id="timerFill"></div></div>
+    <div class="timer-row">
+      <div class="timer-readout" id="timerReadout">5:00</div>
+      <div class="timer-controls">
+        <button class="round-btn reset" id="btnReset" aria-label="Reset timer">↺</button>
+        <button class="round-btn play-pause" id="btnPlayPause" aria-label="Play or pause timer">▶</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- DRAWER -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <aside class="drawer" id="drawer">
+    <h3>Menu</h3>
+    <button class="drawer-item" id="btnViewClue">View secret again</button>
+    <button class="drawer-item" id="btnNewRound">New round</button>
+
+    <div class="drawer-section">
+      <p>Timer length</p>
+      <div class="chip-row" id="chipRow">
+        <button class="chip" data-sec="60">1:00</button>
+        <button class="chip" data-sec="180">3:00</button>
+        <button class="chip active" data-sec="300">5:00</button>
+        <button class="chip" data-sec="480">8:00</button>
+      </div>
+      <div class="custom-timer">
+        <input type="number" id="customMinutes" placeholder="Custom minutes" min="1" max="30">
+        <button id="btnSetCustom">Set</button>
+      </div>
+    </div>
+
+    <button class="drawer-item drawer-close" id="btnCloseDrawer">Close menu</button>
+  </aside>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var WORDS = [
+    // Animals
+    "Dog","Cat","Elephant","Lion","Tiger","Bear","Wolf","Fox","Rabbit","Deer",
+    "Horse","Cow","Pig","Sheep","Goat","Chicken","Duck","Goose","Turkey","Eagle",
+    "Owl","Hawk","Parrot","Penguin","Dolphin","Whale","Shark","Octopus","Crab","Lobster",
+    "Snail","Frog","Turtle","Snake","Lizard","Spider","Bee","Butterfly","Ant","Mosquito",
+    "Mouse","Rat","Squirrel","Raccoon","Skunk","Beaver","Otter","Kangaroo","Koala","Panda",
+    "Monkey","Gorilla","Zebra","Giraffe","Rhino","Hippo","Camel","Cheetah","Leopard","Hyena",
+    // Food
+    "Pizza","Burger","Sandwich","Taco","Burrito","Sushi","Pasta","Noodles","Rice","Bread",
+    "Cheese","Butter","Yogurt","Pancake","Waffle","Cereal","Oatmeal","Soup","Salad","Popcorn",
+    "Pretzel","Cookie","Cake","Pie","Donut","Chocolate","Candy","Ice Cream","Honey","Jam",
+    "Ketchup","Mustard","Mayonnaise","Pepper","Salt","Sugar","Vinegar","Oil","Coffee","Tea",
+    "Juice","Soda","Lemonade","Water","Wine","Beer","Apple","Banana","Orange","Grape",
+    "Strawberry","Watermelon","Pineapple","Mango","Peach","Cherry","Lemon","Lime","Coconut","Avocado",
+    "Potato","Tomato","Onion","Garlic","Carrot","Broccoli","Spinach","Corn","Mushroom","Pumpkin",
+    "Cucumber",
+    // Household
+    "Chair","Table","Sofa","Bed","Pillow","Blanket","Lamp","Mirror","Clock","Curtain",
+    "Carpet","Rug","Shelf","Drawer","Closet","Door","Window","Key","Lock","Candle",
+    "Vase","Artwork","Photograph","Calendar","Broom","Mop","Bucket","Sponge","Towel","Soap",
+    "Shampoo","Toothbrush","Toothpaste","Razor","Comb","Umbrella","Backpack","Wallet","Purse","Suitcase",
+    "Glasses","Sunglasses","Watch","Ring","Necklace","Bracelet","Earring","Hat","Scarf","Glove",
+    "Sock","Shoe","Boot","Jacket","Coat","Shirt","Pants","Dress","Skirt",
+    // Technology
+    "Phone","Computer","Laptop","Tablet","Camera","Television","Radio","Speaker","Headphones","Microphone",
+    "Keyboard","Printer","Router","Battery","Charger","Remote","Robot","Drone","Satellite","Internet",
+    "Website","Password","Email","Video","Download","Message","Screen","Signal","Antenna",
+    // Professions
+    "Doctor","Nurse","Teacher","Lawyer","Engineer","Scientist","Artist","Musician","Actor","Dancer",
+    "Chef","Waiter","Pilot","Farmer","Fisherman","Firefighter","Police Officer","Soldier","Sailor","Astronaut",
+    "Plumber","Electrician","Carpenter","Mechanic","Dentist","Veterinarian","Librarian","Journalist","Photographer","Architect",
+    // Nature & places
+    "Mountain","Valley","River","Lake","Ocean","Sea","Beach","Island","Forest","Jungle",
+    "Desert","Volcano","Cave","Cliff","Waterfall","Glacier","Iceberg","Canyon","Meadow","Swamp",
+    "Cloud","Rainbow","Storm","Thunder","Lightning","Snow","Rain","Wind","Sunshine","Moon",
+    "Sun","Star","Planet","Galaxy","Comet","Sky","Tree","Flower","Grass","Leaf",
+    "Root","Branch","Seed","Garden","Park","Farm","Village","City","Town","Bridge",
+    "Tunnel","Road","Airport","Harbor","Castle","Palace","Church","Temple","School","Hospital",
+    "Library",
+    // Body
+    "Head","Hair","Eye","Ear","Nose","Mouth","Teeth","Tongue","Neck","Shoulder",
+    "Arm","Elbow","Hand","Finger","Thumb","Leg","Knee","Foot","Toe","Heart",
+    // Sports & activities
+    "Soccer","Football","Basketball","Baseball","Tennis","Golf","Swimming","Running","Cycling","Boxing",
+    "Wrestling","Skiing","Skating","Surfing","Climbing","Fishing","Hunting","Camping","Hiking","Yoga",
+    "Dancing","Singing","Painting","Drawing","Reading","Writing","Cooking","Gardening","Chess","Puzzle",
+    // Vehicles
+    "Car","Truck","Bus","Train","Airplane","Helicopter","Boat","Ship","Submarine","Bicycle",
+    "Motorcycle","Scooter","Tractor","Ambulance","Taxi","Subway","Rocket","Canoe","Sled","Wagon",
+    // Instruments
+    "Guitar","Piano","Violin","Drum","Trumpet","Flute","Saxophone","Harp","Cello","Clarinet",
+    "Trombone","Banjo","Accordion","Xylophone","Tambourine",
+    // Emotions & concepts
+    "Happiness","Sadness","Anger","Fear","Surprise","Love","Hate","Courage","Hope","Dream",
+    "Memory","Secret","Mystery","Adventure","Victory","Defeat","Friendship","Family","Wedding","Birthday",
+    // Weather & time
+    "Morning","Afternoon","Evening","Night","Winter","Summer","Spring","Autumn","Holiday","Weekend",
+    "Vacation","Midnight","Sunrise","Sunset","Season",
+    // Misc objects
+    "Treasure","Map","Compass","Telescope","Microscope","Magnet","Ladder","Hammer","Nail","Screwdriver",
+    "Wrench","Scissors","Needle","Thread","Button","Zipper","Envelope","Stamp","Letter","Newspaper",
+    "Magazine","Book","Pencil","Pen","Crayon","Balloon","Kite","Flag","Lantern","Whistle",
+    // School & office
+    "Notebook","Eraser","Ruler","Stapler","Tape","Glue","Marker","Chalk","Blackboard","Textbook",
+    "Homework","Exam","Diploma","Graduation","Uniform","Locker","Cafeteria","Playground","Gymnasium","Trophy",
+    "Medal","Certificate","Badge","Banner","Poster","Sticker","Coupon","Ticket","Receipt",
+    // Kitchen
+    "Oven","Stove","Microwave","Refrigerator","Blender","Toaster","Kettle","Pot","Pan","Plate",
+    "Bowl","Cup","Mug","Fork","Spoon","Knife","Napkin","Tablecloth","Apron","Dishwasher"
+  ];
+
+  var state = {
+    words: [],
+    secretIndex: 0,
+    timerLength: 300,
+    timeRemaining: 300,
+    timerRunning: false,
+    timerHandle: null,
+    reviewMode: false,
+    masterRevealed: false,
+    insiderRevealed: false
+  };
+
+  // ---------- helpers ----------
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function pickWords(){
+    return shuffle(WORDS).slice(0, 5);
+  }
+
+  function vibrate(ms){
+    if(navigator.vibrate){ try{ navigator.vibrate(ms); }catch(e){} }
+  }
+
+  // ---------- rendering ----------
+  function renderWordList(containerId){
+    var el = document.getElementById(containerId);
+    el.innerHTML = "";
+    state.words.forEach(function(word, i){
+      var row = document.createElement("div");
+      row.className = "word-row";
+      row.setAttribute("data-index", i);
+      row.innerHTML =
+        '<div class="word-index">' + String(i + 1).padStart(2, "0") + '</div>' +
+        '<div class="word-text">' + word + '</div>' +
+        '<div class="word-check">✓</div>';
+      el.appendChild(row);
+    });
+  }
+
+  function renderAllWordLists(){
+    renderWordList("wordlist-master");
+    renderWordList("wordlist-insider");
+    renderWordList("wordlist-play");
+  }
+
+  function setHighlight(containerId, on){
+    var el = document.getElementById(containerId);
+    var rows = el.querySelectorAll(".word-row");
+    rows.forEach(function(row){
+      var idx = parseInt(row.getAttribute("data-index"), 10);
+      row.classList.toggle("highlight", on && idx === state.secretIndex);
+    });
+  }
+
+  // ---------- screens ----------
+  function showScreen(name){
+    document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+    document.getElementById("screen-" + name).classList.add("active");
+    document.getElementById("timerBar").classList.toggle("hidden", name !== "play");
+    document.getElementById("menuBtn").classList.toggle("hidden", name === "home");
+    document.getElementById("screens").scrollTop = 0;
+  }
+
+  // ---------- round flow ----------
+  function newRound(){
+    state.words = pickWords();
+    state.secretIndex = Math.floor(Math.random() * 5);
+    state.masterRevealed = false;
+    state.insiderRevealed = false;
+    state.reviewMode = false;
+    renderAllWordLists();
+    updateContinueButtons();
+    resetTimer();
+    showScreen("master");
+  }
+
+  function viewClueAgain(){
+    if(state.words.length === 0) return;
+    closeDrawer();
+    pauseTimer();
+    state.reviewMode = true;
+    state.masterRevealed = false;
+    state.insiderRevealed = false;
+    updateContinueButtons();
+    document.getElementById("btnInsiderContinue").textContent = "Back to the round →";
+    showScreen("master");
+  }
+
+  function updateContinueButtons(){
+    document.getElementById("btnMasterContinue").disabled = !state.masterRevealed;
+    document.getElementById("btnInsiderContinue").disabled = !state.insiderRevealed;
+    document.getElementById("masterHint").style.display = state.masterRevealed ? "none" : "block";
+    document.getElementById("insiderHint").style.display = state.insiderRevealed ? "none" : "block";
+    if(!state.reviewMode){
+      document.getElementById("btnInsiderContinue").textContent = "Start the round →";
+    }
+  }
+
+  // ---------- reveal press handling ----------
+  function wireReveal(btnId, containerId, revealedFlag){
+    var btn = document.getElementById(btnId);
+    var active = false;
+
+    function start(e){
+      e.preventDefault();
+      if(active) return;
+      active = true;
+      btn.classList.add("pressed");
+      setHighlight(containerId, true);
+      vibrate(15);
+      if(revealedFlag === "master"){ state.masterRevealed = true; }
+      else { state.insiderRevealed = true; }
+      updateContinueButtons();
+    }
+    function end(e){
+      if(!active) return;
+      active = false;
+      btn.classList.remove("pressed");
+      setHighlight(containerId, false);
+    }
+
+    btn.addEventListener("pointerdown", start);
+    btn.addEventListener("pointerup", end);
+    btn.addEventListener("pointerleave", end);
+    btn.addEventListener("pointercancel", end);
+    btn.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+  }
+
+  // ---------- timer ----------
+  function formatTime(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return m + ":" + String(s).padStart(2, "0");
+  }
+
+  function updateTimerDisplay(){
+    document.getElementById("timerReadout").textContent = formatTime(Math.max(0, state.timeRemaining));
+    var pct = Math.max(0, (state.timeRemaining / state.timerLength) * 100);
+    document.getElementById("timerFill").style.width = pct + "%";
+    var bar = document.getElementById("timerBar");
+    bar.classList.toggle("time-up", state.timeRemaining <= 0);
+    document.getElementById("btnPlayPause").textContent = state.timerRunning ? "❚❚" : "▶";
+  }
+
+  function tick(){
+    if(state.timeRemaining > 0){
+      state.timeRemaining--;
+      updateTimerDisplay();
+      if(state.timeRemaining === 0){
+        pauseTimer();
+        vibrate([100, 60, 100, 60, 100]);
+      }
+    }
+  }
+
+  function playTimer(){
+    if(state.timerRunning || state.timeRemaining <= 0) return;
+    state.timerRunning = true;
+    state.timerHandle = setInterval(tick, 1000);
+    updateTimerDisplay();
+  }
+
+  function pauseTimer(){
+    state.timerRunning = false;
+    clearInterval(state.timerHandle);
+    updateTimerDisplay();
+  }
+
+  function resetTimer(){
+    pauseTimer();
+    state.timeRemaining = state.timerLength;
+    updateTimerDisplay();
+  }
+
+  function setTimerLength(seconds){
+    state.timerLength = seconds;
+    resetTimer();
+    document.querySelectorAll(".chip").forEach(function(c){
+      c.classList.toggle("active", parseInt(c.getAttribute("data-sec"), 10) === seconds);
+    });
+  }
+
+  // ---------- drawer ----------
+  function openDrawer(){
+    document.getElementById("drawer").classList.add("open");
+    document.getElementById("drawerOverlay").classList.add("open");
+    document.getElementById("btnViewClue").disabled = state.words.length === 0;
+  }
+  function closeDrawer(){
+    document.getElementById("drawer").classList.remove("open");
+    document.getElementById("drawerOverlay").classList.remove("open");
+  }
+
+  // ---------- wire up ----------
+  document.getElementById("btnHomeStart").addEventListener("click", newRound);
+  document.getElementById("btnNewRound").addEventListener("click", function(){ closeDrawer(); newRound(); });
+  document.getElementById("btnViewClue").addEventListener("click", viewClueAgain);
+
+  document.getElementById("menuBtn").addEventListener("click", openDrawer);
+  document.getElementById("drawerOverlay").addEventListener("click", closeDrawer);
+  document.getElementById("btnCloseDrawer").addEventListener("click", closeDrawer);
+
+  document.getElementById("btnMasterContinue").addEventListener("click", function(){
+    showScreen("insider");
+  });
+
+  document.getElementById("btnInsiderContinue").addEventListener("click", function(){
+    if(state.reviewMode){
+      state.reviewMode = false;
+      showScreen("play");
+    } else {
+      resetTimer();
+      showScreen("play");
+    }
+  });
+
+  wireReveal("revealBtnMaster", "wordlist-master", "master");
+  wireReveal("revealBtnInsider", "wordlist-insider", "insider");
+
+  document.getElementById("btnPlayPause").addEventListener("click", function(){
+    if(state.timerRunning){ pauseTimer(); } else { playTimer(); }
+  });
+  document.getElementById("btnReset").addEventListener("click", resetTimer);
+
+  document.querySelectorAll(".chip").forEach(function(chip){
+    chip.addEventListener("click", function(){
+      setTimerLength(parseInt(chip.getAttribute("data-sec"), 10));
+    });
+  });
+
+  document.getElementById("btnSetCustom").addEventListener("click", function(){
+    var input = document.getElementById("customMinutes");
+    var mins = parseFloat(input.value);
+    if(isNaN(mins) || mins <= 0) return;
+    mins = Math.min(30, Math.max(0.5, mins));
+    setTimerLength(Math.round(mins * 60));
+    document.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("active"); });
+    input.value = "";
+  });
+
+  // ---------- init ----------
+  updateTimerDisplay();
+
+})();
+</script>
+</body>
+</html>
