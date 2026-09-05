@@ -149,6 +149,7 @@
   .count-btn.active{ border-color: var(--gold); background: rgba(232,184,75,0.12); color: var(--gold); }
   
   .custom-count{ display:flex; gap:8px; margin-bottom:20px; }
+  .custom-count input{ flex:1; min-width:0; }
   .custom-count input, .name-input{
     background: var(--bg-elev);
     border: 1.5px solid var(--border);
@@ -250,7 +251,6 @@
     touch-action: none;
     user-select: none;
   }
-  .reveal-btn.pressed{ background: rgba(232,184,75,0.22); }
 
   /* Timer Bar */
   .timerbar{
@@ -301,6 +301,15 @@
   .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
   .chip{ background: var(--bg-elev); border: 1px solid var(--border); color: var(--cream); padding: 8px 12px; border-radius: 999px; font-size: 14px; cursor:pointer; }
   .chip.active{ background: var(--gold); color:#2b1c05; border-color: var(--gold); font-weight:700; }
+  .custom-timer{ display:flex; gap:8px; margin-top:2px; }
+  .custom-timer input{
+    flex:1; background: var(--bg-elev); border: 1px solid var(--border); color: var(--cream);
+    border-radius: 8px; padding: 10px; font-size:15px;
+  }
+  .custom-timer button{
+    background: var(--bg-elev); border: 1px solid var(--border); color: var(--gold);
+    border-radius: 8px; padding: 10px 14px; font-weight:700; cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -334,7 +343,7 @@
       <h1 class="home-title" data-i18n="brand">SECRET WORD</h1>
       <p class="home-sub" data-i18n="sub">A companion for your Insider-style party round. Someone always knows more than they let on.</p>
 
-      <button class="btn btn-primary" id="btnHomeStart" data-i18n="startRound">Start new round</button>
+      <button class="btn btn-primary" id="btnHomeStart" data-i18n="startRound" disabled>Loading words…</button>
 
       <details class="rules">
         <summary data-i18n="howItWorks">How a round works</summary>
@@ -358,6 +367,10 @@
         <button class="count-btn" data-count="6">6</button>
         <button class="count-btn" data-count="7">7</button>
         <button class="count-btn" data-count="8">8</button>
+      </div>
+      <div class="custom-count">
+        <input type="number" id="customPlayerCount" min="3" max="30" data-i18n-placeholder="customCount" placeholder="Custom (9+)">
+        <button class="btn btn-ghost" id="btnSetCustomCount" style="width:auto; padding:12px 16px;" data-i18n="set">Set</button>
       </div>
 
       <div class="toggle-card">
@@ -386,8 +399,19 @@
       <h3 class="modal-player-name" id="modalPlayerName">Player 1</h3>
       
       <div class="reveal-box" id="revealBox">
-        <p style="margin:0; color:var(--muted); font-size:14px;" data-i18n="confidential">Confidential Role</p>
-        <button class="reveal-btn" id="modalRevealBtn" data-i18n="holdToView">Hold or Tap to reveal</button>
+        <div id="revealHidden">
+          <p style="margin:0 0 14px; color:var(--muted); font-size:14px;" data-i18n="confidential">Confidential Role</p>
+          <button class="reveal-btn" id="modalRevealBtn" data-i18n="holdToView">Tap to reveal</button>
+        </div>
+        <div id="revealShown" style="display:none;">
+          <h3 id="revealRoleTitle" style="font-size:26px; color:var(--cream); margin:0 0 8px;"></h3>
+          <p id="revealRoleDesc" style="font-size:13px; color:var(--muted); margin:0 0 14px;"></p>
+          <div id="revealWordWrap" style="display:none;">
+            <div style="font-size:12px; color:var(--muted); text-transform:uppercase; margin-bottom:6px;" data-i18n="secretWord">Secret Word</div>
+            <div class="secret-word-display" id="revealWordText"></div>
+          </div>
+          <button class="btn btn-ghost" id="modalHideBtn" style="margin-top:14px; width:100%;" data-i18n="hideSecret">Hide</button>
+        </div>
       </div>
 
       <button class="btn btn-ghost" id="btnCloseModal" data-i18n="hideSecret">Hide & Close</button>
@@ -427,6 +451,10 @@
         <button class="chip active" data-sec="300">5:00</button>
         <button class="chip" data-sec="480">8:00</button>
       </div>
+      <div class="custom-timer">
+        <input type="number" id="customMinutes" min="1" max="30" data-i18n-placeholder="customMinutesPlaceholder" placeholder="Custom minutes">
+        <button id="btnSetCustomTimer" data-i18n="set">Set</button>
+      </div>
     </div>
 
     <button class="drawer-item" id="btnCloseDrawer" style="margin-top:auto;" data-i18n="closeMenu">Close menu</button>
@@ -456,7 +484,7 @@
       btnStartGame: "Start Game →",
       tapToSeeRole: "Tap your name to view secret role & word",
       confidential: "Confidential Role",
-      holdToView: "Hold to reveal",
+      holdToView: "Tap to reveal",
       hideSecret: "Hide & Close",
       roleMaster: "Master",
       descMaster: "You know the secret word. Answer questions with Yes/No/I don't know.",
@@ -470,7 +498,11 @@
       newRound: "New round",
       timerLength: "Timer length",
       closeMenu: "Close menu",
-      player: "Player"
+      player: "Player",
+      tapToView: "Tap to view",
+      set: "Set",
+      customCount: "Custom (9+)",
+      customMinutesPlaceholder: "Custom minutes"
     },
     bg: {
       brand: "ТАЙНА ДУМА",
@@ -489,7 +521,7 @@
       btnStartGame: "Започни играта →",
       tapToSeeRole: "Натисни името си, за да видиш своята роля и дума",
       confidential: "Секретна роля",
-      holdToView: "Задръж за разкриване",
+      holdToView: "Натисни за разкриване",
       hideSecret: "Скрий и затвори",
       roleMaster: "Мастър (Водещ)",
       descMaster: "Ти знаеш тайната дума. Отговаряй на въпросите с Да/Не/Не знам.",
@@ -503,184 +535,50 @@
       newRound: "Нов рунд",
       timerLength: "Времетраене",
       closeMenu: "Затвори менюто",
-      player: "Играч"
+      player: "Играч",
+      tapToView: "Натисни за преглед",
+      set: "Задай",
+      customCount: "Друг брой (9+)",
+      customMinutesPlaceholder: "Персонализирани минути"
     }
   };
 
-  var WORDS = {
-    en: [
-      // Original 120
-      "Dog","Cat","Elephant","Lion","Tiger","Bear","Wolf","Fox","Rabbit","Deer",
-      "Horse","Cow","Pig","Sheep","Goat","Chicken","Duck","Eagle","Owl","Penguin",
-      "Dolphin","Whale","Shark","Octopus","Frog","Turtle","Snake","Spider","Bee","Butterfly",
-      "Panda","Monkey","Gorilla","Zebra","Giraffe","Pizza","Burger","Sandwich","Taco","Sushi",
-      "Pasta","Bread","Cheese","Soup","Salad","Popcorn","Cookie","Cake","Ice Cream","Chocolate",
-      "Coffee","Tea","Juice","Apple","Banana","Orange","Watermelon","Pineapple","Potato","Tomato",
-      "Carrot","Chair","Table","Sofa","Bed","Pillow","Lamp","Mirror","Clock","Door",
-      "Window","Key","Candle","Backpack","Glasses","Watch","Shirt","Pants","Phone","Computer",
-      "Laptop","Camera","Television","Headphones","Doctor","Teacher","Artist","Chef","Pilot","Firefighter",
-      "Mountain","River","Ocean","Beach","Island","Forest","Desert","Volcano","Rainbow","Snow",
-      "Sun","Moon","Star","Planet","Car","Bicycle","Airplane","Helicopter","Ship","Rocket",
-      "Guitar","Piano","Drum","Violin","Book","Pencil","Balloon","Flag","Castle","Library",
+  // Word list is loaded from words.json (falls back to a small built-in
+  // list if the fetch fails, e.g. when opening this file directly without
+  // a local server instead of through GitHub Pages).
+  var WORDS = [];
+  var wordsReady = false;
 
-      // 380 New Everyday Words
-      // Kitchen & Dining
-      "Spoon","Fork","Knife","Plate","Bowl","Cup","Mug","Pan","Pot","Blender",
-      "Toaster","Microwave","Refrigerator","Oven","Stove","Kettle","Teapot","Cutting board","Peeler","Grater",
-      "Whisk","Ladle","Colander","Napkin","Tray","Thermos","Apron","Sponge","Dishwasher","Can opener",
-      
-      // Household & Furniture
-      "Armchair","Stool","Desk","Bookshelf","Closet","Cabinet","Drawer","Carpet","Curtain","Blanket",
-      "Sheet","Mattress","Hanger","Trash can","Broom","Mop","Bucket","Vacuum cleaner","Fan","Heater",
-      "Air conditioner","Light bulb","Switch","Socket","Doormat","Vase","Picture frame","Fireplace","Cushion","Ironing board",
+  var WORDS_FALLBACK = [
+    {en:"Dog", bg:"Куче"}, {en:"Cat", bg:"Котка"}, {en:"Pizza", bg:"Пица"},
+    {en:"Mountain", bg:"Планина"}, {en:"Guitar", bg:"Китара"}, {en:"Doctor", bg:"Лекар"},
+    {en:"River", bg:"Река"}, {en:"Castle", bg:"Замък"}, {en:"Bicycle", bg:"Велосипед"},
+    {en:"Chocolate", bg:"Шоколад"}, {en:"Umbrella", bg:"Чадър"}, {en:"Airplane", bg:"Самолет"},
+    {en:"Library", bg:"Библиотека"}, {en:"Volcano", bg:"Вулкан"}, {en:"Robot", bg:"Робот"},
+    {en:"Garden", bg:"Градина"}, {en:"Trophy", bg:"Трофей"}, {en:"Waterfall", bg:"Водопад"},
+    {en:"Telescope", bg:"Телескоп"}, {en:"Sandwich", bg:"Сандвич"}
+  ];
 
-      // Clothes & Accessories
-      "Jacket","Coat","Sweater","Hoodie","T-shirt","Shorts","Dress","Skirt","Suit","Tie",
-      "Belt","Socks","Shoes","Boots","Sneakers","Sandals","Slippers","Hat","Cap","Gloves",
-      "Scarf","Umbrella","Wallet","Purse","Suitcase","Ring","Necklace","Bracelet","Earrings","Zipper",
+  function loadWords(){
+    return fetch("words.json")
+      .then(function(res){
+        if(!res.ok) throw new Error("bad response");
+        return res.json();
+      })
+      .then(function(data){
+        WORDS = data;
+      })
+      .catch(function(err){
+        console.warn("Could not load words.json, using a small built-in fallback list.", err);
+        WORDS = WORDS_FALLBACK;
+      })
+      .then(function(){
+        wordsReady = true;
+        document.getElementById("btnHomeStart").disabled = false;
+        document.getElementById("btnHomeStart").textContent = i18n[state.lang].startRound;
+      });
+  }
 
-      // Food & Snacks
-      "Rice","Beans","Peas","Corn","Mushroom","Garlic","Onion","Cucumber","Cabbage","Lettuce",
-      "Spinach","Broccoli","Strawberry","Grape","Lemon","Peach","Cherry","Plum","Pear","Raspberry",
-      "Blueberry","Coconut","Nut","Peanut","Honey","Jam","Butter","Milk","Yogurt","Egg",
-      "Pancake","Waffle","Donut","Pie","Salt",
-
-      // Drinks & Condiments
-      "Sugar","Pepper","Vinegar","Oil","Ketchup","Mustard","Mayonnaise","Sauce","Soda","Lemonade",
-      "Wine","Beer","Oatmeal","Chocolate bar","Candy","Chewing gum","Toast","Olive","Meatball","Butter",
-
-      // Personal Care & Hygiene
-      "Toothbrush","Toothpaste","Soap","Shampoo","Towel","Comb","Hairbrush","Razor","Scissors","Nail clipper",
-      "Hairdryer","Perfume","Lotion","Tissue","Toilet paper","Cotton swab","Bandage","Tweezers","Deodorant","Lip balm",
-
-      // Electronics & Tech
-      "Tablet","Mouse","Keyboard","Screen","Printer","Router","Charger","Cable","Plug","Flash drive",
-      "Remote control","Speaker","Microphone","Radio","Battery","Flashlight","Calculator","Drone","Smartwatch","Video game",
-      "Console","Projector","Antenna","Extension cord","Power bank",
-
-      // Office & School Supplies
-      "Pen","Eraser","Ruler","Notebook","Notepad","Folder","Envelope","Stamp","Paperclip","Stapler",
-      "Tape","Glue","Marker","Chalk","Blackboard","Briefcase","Pencil case","Globe","Map","Compass",
-      "Magnifying glass","Dictionary","Newspaper","Magazine","Bookmark",
-
-      // Tools & Hardware
-      "Hammer","Screwdriver","Pliers","Wrench","Saw","Nail","Screw","Drill","Ladder","Shovel",
-      "Rake","Axe","Rope","Chain","Lock","Padlock","Tape measure","Wheelbarrow","Watering can","Hose",
-      "Lawn mower","Tent","Sleeping bag","Torch","Pocket knife",
-
-      // Animals, Birds & Bugs
-      "Donkey","Camel","Hippo","Rhino","Cheetah","Leopard","Kangaroo","Koala","Squirrel","Badger",
-      "Hedgehog","Bat","Otter","Beaver","Raccoon","Goose","Swan","Flamingo","Parrot","Peacock",
-      "Crow","Pigeon","Seagull","Lizard","Chameleon","Crocodile","Cobra","Crab","Lobster","Snail",
-      "Ant","Mosquito","Fly","Dragonfly","Worm","Jellyfish","Seahorse","Starfish","Moth","Caterpillar",
-
-      // Vehicles & Transport
-      "Bus","Train","Tram","Subway","Taxi","Truck","Motorcycle","Scooter","Tractor","Ambulance",
-      "Fire truck","Police car","Skateboard","Roller skates","Boat","Submarine","Canoe","Sailboat","Hot air balloon","Cable car",
-      "Sled","Cart","Ferry","Yacht","Van",
-
-      // Buildings & Places
-      "House","Apartment","School","Hospital","Pharmacy","Supermarket","Bakery","Restaurant","Cafe","Hotel",
-      "Bank","Cinema","Theater","Museum","Park","Garden","Farm","Zoo","Airport","Station",
-      "Bridge","Tunnel","Street","Tower","Lighthouse","Fountain","Cave","Waterfall","Lake","Meadow",
-      "Swamp","Cliff","Glacier","Stadium","Garage",
-
-      // Sports, Hobbies & Music
-      "Ball","Football","Basketball","Tennis racket","Skis","Snowboard","Helmet","Whistle","Trophy","Medal",
-      "Puzzle","Chess set","Dice","Playing cards","Doll","Teddy bear","Kite","Yo-yo","Trampoline","Trumpet",
-      "Flute","Saxophone","Accordion","Harmonica","Tambourine",
-
-      // Everyday Objects & Misc
-      "Coin","Banknote","Ticket","Receipt","Passport","Gift","Ribbon","Crown","Shield","Sword",
-      "Arrow","Anchor","Feather","Magnet","Keyring"
-    ],
-    bg: [
-      // Original 120
-      "Куче","Котка","Слон","Лъв","Тигър","Мечка","Вълк","Лисица","Заек","Елен",
-      "Кон","Крава","Прасе","Овца","Коза","Кокошка","Патица","Орел","Бухал","Пингвин",
-      "Делфин","Кит","Акула","Октопод","Жаба","Костенурка","Змия","Паяк","Пчела","Пеперуда",
-      "Панда","Маймуна","Горила","Зебра","Жираф","Пица","Бургер","Сандвич","Тако","Суши",
-      "Паста","Хляб","Сирене","Супа","Салата","Пуканки","Бисквитка","Торта","Сладолед","Шоколад",
-      "Кафе","Чай","Сок","Ябълка","Банан","Портокал","Диня","Ананас","Картоф","Домат",
-      "Морков","Стол","Маса","Диван","Легло","Възглавница","Лампа","Огледало","Часовник","Врата",
-      "Прозорец","Ключ","Свещ","Раница","Очила","Часовник","Риза","Панталон","Телефон","Компютър",
-      "Лаптоп","Камера","Телевизор","Слушалки","Лекар","Учител","Художник","Готвач","Пилот","Пожарникар",
-      "Планина","Река","Океан","Плаж","Остров","Гора","Пустиня","Вулкан","Дъга","Сняг",
-      "Слънце","Луна","Звезда","Планета","Кола","Велосипед","Самолет","Хеликоптер","Кораб","Ракета",
-      "Китара","Пиано","Барабан","Цигулка","Книга","Молив","Балон","Знаме","Замък","Библиотека",
-
-      // 380 New Everyday Words
-      // Кухня и хранене
-      "Лъжица","Вилица","Нож","Чиния","Купа","Чаша","Халба","Тиган","Тенджера","Блендер",
-      "Тостер","Микровълнова","Хладилник","Фурна","Котлон","Чайник","Чайник за чай","Дъска за рязане","Белачка","Ренде",
-      "Телена бъркалка","Черпак","Гевгир","Салфетка","Табла","Термос","Престилка","Гъба","Съдомиялна","Отварячка",
-      
-      // Дом и мебели
-      "Кресло","Табуретка","Бюро","Рафт за книги","Гардероб","Шкаф","Чекмедже","Килим","Завеса","Завивка",
-      "Чаршаф","Матрак","Закачалка","Кош за боклук","Метла","Моп","Кофа","Прахосмукачка","Вентилатор","Отоплител",
-      "Климатик","Крушка","Ключ за лампа","Контакт","Изтривалка","Ваза","Рамка за снимка","Камина","Възглавничка","Дъска за гладене",
-
-      // Дрехи и аксесоари
-      "Яке","Палто","Пуловер","Суичър","Тениска","Шорти","Рокля","Пола","Костюм","Вратовръзка",
-      "Колан","Чорапи","Обувки","Ботуши","Маратонки","Сандали","Чехли","Шапка","Бейзболна шапка","Ръкавици",
-      "Шал","Чадър","Портфейл","Дамска чанта","Куфар","Пръстен","Колие","Гривна","Обеци","Цип",
-
-      // Храна и снаксове
-      "Ориз","Фасул","Грах","Царевица","Гъба","Чесън","Лук","Краставица","Зеле","Маруля",
-      "Спанак","Броколи","Ягода","Грозде","Лимон","Праскова","Череша","Слива","Круша","Малина",
-      "Боровинка","Кокос","Орех","Фъстък","Мед","Мармалад","Масло","Мляко","Кисело мляко","Яйце",
-      "Палачинка","Гофрета","Поничка","Пай","Сол",
-
-      // Напитки и подправки
-      "Захар","Чер пипер","Оцет","Олио","Кетчуп","Горчица","Майонеза","Сос","Газирана вода","Лимонада",
-      "Вино","Бира","Овесена каша","Шоколад","Бонбон","Дъвка","Препечен хляб","Маслина","Кюфте","Масло",
-
-      // Лична хигиена
-      "Четка за зъби","Паста за зъби","Сапун","Шампоан","Кърпа","Гребен","Четка за коса","Самобръсначка","Ножица","Нокторезачка",
-      "Сешоар","Парфюм","Крем","Хартиена кърпичка","Тоалетна хартия","Клечка за уши","Лепенка","Пинсета","Дезодорант","Балсам за устни",
-
-      // Електроника и техника
-      "Таблет","Мишка","Клавиатура","Екран","Принтер","Рутер","Зарядно","Кабел","Щепсел","Флашка",
-      "Дистанционно","Колонка","Микрофон","Радио","Батерия","Фенерче","Калкулатор","Дрон","Смарт часовник","Видео игра",
-      "Конзола","Проектор","Антена","Разклонител","Външна батерия",
-
-      // Офис и училище
-      "Химикалка","Гумичка","Линия","Тетрадка","Блокнот","Папка","Плик","Пощенска марка","Кламер","Телбод",
-      "Тиксо","Лепило","Маркер","Тебешир","Черна дъска","Куфарче","Несесер","Глобус","Карта","Компас",
-      "Лупа","Речник","Вестник","Списание","Книгоразделител",
-
-      // Инструменти и оборудване
-      "Чук","Отвертка","Клещи","Гаечен ключ","Трион","Пирон","Винт","Бормашина","Стълба","Лопата",
-      "Гребло","Брадва","Въже","Верига","Катинар","Катинар за заключване","Ролетка","Количка","Лейка","Маркуч",
-      "Косачка","Палатка","Спален чувал","Фенер","Джобно ножче",
-
-      // Животни, птици и насекоми
-      "Магаре","Камила","Хипопотам","Носорог","Гепард","Леопард","Кенгуру","Коала","Катерица","Язовец",
-      "Еж","Прилеп","Видра","Бобър","Енот","Гъска","Лебед","Фламинго","Папагал","Паун",
-      "Врана","Гълъб","Чайка","Гущер","Хамелеон","Крокодил","Кобра","Рак","Омар","Охлюв",
-      "Мравка","Комар","Муха","Водно конче","Червей","Медуза","Морско конче","Морска звезда","Нощна пеперуда","Гъсеница",
-
-      // Превозни средства
-      "Автобус","Влак","Трамвай","Метро","Такси","Камион","Мотоциклет","Скутер","Трактор","Линейка",
-      "Пожарна кола","Полицейска кола","Скейтборд","Ролери","Лодка","Подводница","Кану","Ветроходка","Балон с горещ въздух","Кабинков лифт",
-      "Шейна","Количка за пазаруване","Ферибот","Яхта","Микробус",
-
-      // Сгради и места
-      "Къща","Апартамент","Училище","Болница","Аптека","Супермаркет","Пекарна","Ресторант","Кафене","Хотел",
-      "Банка","Кино","Театър","Музей","Парк","Градина","Ферма","Зоопарк","Летище","Гара",
-      "Мост","Тунел","Улица","Кула","Фар","Фонтан","Пещера","Водопад","Езеро","Ливада",
-      "Блато","Скала","Ледник","Стадион","Гараж",
-
-      // Спорт, хоби и музика
-      "Топка","Футболна топка","Баскетболна топка","Тенис ракета","Ски","Сноуборд","Каска","Свирка","Купа","Медал",
-      "Пъзел","Шах","Зарове","Карти за игра","Кукла","Плюшено мече","Хвърчило","Йо-йо","Батут","Тръба",
-      "Флейта","Саксофон","Акордеон","Устна хармоника","Дайре",
-
-      // Всекидневни предмети
-      "Монета","Банкнота","Билет","Касова бележка","Паспорт","Подарък","Панделка","Корона","Щит","Меч",
-      "Стрела","Котва","Перо","Магнит","Ключодържател"
-    ]
-  };
 
   var state = {
     lang: "en",
@@ -703,6 +601,18 @@
         el.textContent = i18n[lang][key];
       }
     });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function(el){
+      var key = el.getAttribute("data-i18n-placeholder");
+      if(i18n[lang] && i18n[lang][key]){
+        el.placeholder = i18n[lang][key];
+      }
+    });
+    if(wordsReady){
+      document.getElementById("btnHomeStart").textContent = i18n[lang].startRound;
+    }
+    if(state.playerRoles.length){
+      renderPlayGrid();
+    }
     renderNameInputs();
   }
 
@@ -732,12 +642,12 @@
   }
 
   function startNewRound(){
+    if(!wordsReady) return;
     var count = state.playerCount;
     var isAdvanced = document.getElementById("chkAdvanced").checked;
     
     // Pick word index
-    var wordList = WORDS[state.lang] || WORDS.en;
-    state.secretWordIndex = Math.floor(Math.random() * wordList.length);
+    state.secretWordIndex = Math.floor(Math.random() * WORDS.length);
 
     // Assign roles
     var roles = new Array(count).fill("Detective");
@@ -771,7 +681,7 @@
       var btn = document.createElement("button");
       btn.className = "player-btn";
       btn.setAttribute("data-idx", i);
-      btn.innerHTML = '<span>' + name + '</span><span class="sub-tag">Tap to view</span>';
+      btn.innerHTML = '<span>' + name + '</span><span class="sub-tag">' + i18n[state.lang].tapToView + '</span>';
       btn.addEventListener("click", function(){
         openRoleModal(parseInt(this.getAttribute("data-idx"), 10));
       });
@@ -784,50 +694,46 @@
     state.activePlayerIndex = idx;
     var name = state.playerNames[idx] || ((i18n[state.lang].player || "Player") + " " + (idx + 1));
     document.getElementById("modalPlayerName").textContent = name;
-    
-    // Hide content initially
+
+    // populate the (initially hidden) revealed content for this player now,
+    // so it's ready the instant they press and hold
+    var role = state.playerRoles[idx];
+    var currentWord = WORDS[state.secretWordIndex][state.lang];
+    document.getElementById("revealRoleTitle").textContent = i18n[state.lang]["role" + role] || role;
+    document.getElementById("revealRoleDesc").textContent = i18n[state.lang]["desc" + role] || "";
+    var wordWrap = document.getElementById("revealWordWrap");
+    if(role === "Master" || role === "Insider"){
+      document.getElementById("revealWordText").textContent = currentWord;
+      wordWrap.style.display = "flex";
+    } else {
+      wordWrap.style.display = "none";
+    }
+
     resetModalReveal();
     document.getElementById("roleModal").classList.add("open");
   }
 
   function resetModalReveal(){
-    var box = document.getElementById("revealBox");
-    box.innerHTML = 
-      '<p style="margin:0; color:var(--muted); font-size:14px;">' + i18n[state.lang].confidential + '</p>' +
-      '<button class="reveal-btn" id="modalRevealBtn">' + i18n[state.lang].holdToView + '</button>';
-    
-    wireModalReveal();
+    document.getElementById("revealHidden").style.display = "block";
+    document.getElementById("revealShown").style.display = "none";
   }
 
   function wireModalReveal(){
     var btn = document.getElementById("modalRevealBtn");
-    if(!btn) return;
+    var hideBtn = document.getElementById("modalHideBtn");
+    if(!btn || !hideBtn) return;
 
-    var active = false;
-
-    function reveal(){
-      var role = state.playerRoles[state.activePlayerIndex];
-      var box = document.getElementById("revealBox");
-      var currentWord = WORDS[state.lang][state.secretWordIndex];
-
-      var roleTitle = i18n[state.lang]["role" + role] || role;
-      var roleDesc = i18n[state.lang]["desc" + role] || "";
-
-      var html = '<h3 style="font-size:26px; color:var(--cream); margin:0;">' + roleTitle + '</h3>';
-      html += '<p style="font-size:13px; color:var(--muted); margin:0;">' + roleDesc + '</p>';
-
-      if(role === "Master" || role === "Insider"){
-        html += '<div style="margin-top:6px; font-size:12px; color:var(--muted); text-transform:uppercase;">' + i18n[state.lang].secretWord + '</div>';
-        html += '<div class="secret-word-display">' + currentWord + '</div>';
-      }
-
-      box.innerHTML = html;
+    function show(){
+      document.getElementById("revealHidden").style.display = "none";
+      document.getElementById("revealShown").style.display = "block";
+    }
+    function hide(){
+      document.getElementById("revealHidden").style.display = "block";
+      document.getElementById("revealShown").style.display = "none";
     }
 
-    function start(e){ e.preventDefault(); if(!active){ active = true; reveal(); } }
-    
-    btn.addEventListener("pointerdown", start);
-    btn.addEventListener("click", start);
+    btn.addEventListener("click", show);
+    hideBtn.addEventListener("click", hide);
   }
 
   function closeModal(){
@@ -888,6 +794,15 @@
     });
   });
 
+  document.getElementById("btnSetCustomCount").addEventListener("click", function(){
+    var input = document.getElementById("customPlayerCount");
+    var count = parseInt(input.value, 10);
+    if(isNaN(count) || count < 3 || count > 30) return;
+    document.querySelectorAll(".count-btn").forEach(function(b){ b.classList.remove("active"); });
+    state.playerCount = count;
+    renderNameInputs();
+  });
+
   document.getElementById("btnStartGame").addEventListener("click", startNewRound);
   document.getElementById("btnCloseModal").addEventListener("click", closeModal);
 
@@ -927,9 +842,22 @@
     });
   });
 
+  document.getElementById("btnSetCustomTimer").addEventListener("click", function(){
+    var input = document.getElementById("customMinutes");
+    var mins = parseFloat(input.value);
+    if(isNaN(mins) || mins <= 0) return;
+    mins = Math.min(30, Math.max(0.5, mins));
+    document.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("active"); });
+    state.timerLength = Math.round(mins * 60);
+    resetTimer();
+    input.value = "";
+  });
+
   // Init
   renderNameInputs();
   updateTimerDisplay();
+  wireModalReveal();
+  loadWords();
 
 })();
 </script>
